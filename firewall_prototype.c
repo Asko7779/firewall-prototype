@@ -8,14 +8,11 @@
 #include <sys/socket.h>
 #include <net/ethernet.h>
 #include <pthread.h>
-
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
-
 #define MAX_RULES 10
-
 struct firewall_rule {
     char action[10];
     uint32_t ip_address;
@@ -25,13 +22,11 @@ struct firewall_rule {
 struct firewall_rule rules[MAX_RULES];
 int rule_count = 0;
 pthread_mutex_t rule_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 void packet_handler(unsigned char *buffer, int size);
 void view_rules();
 void add_rule();
 void log_traffic(struct ip *ip_header, struct tcphdr *tcp_header);
 void *command_line_interface(void *arg);
-
 #ifdef _WIN32
 void init_winsock() {
     WSADATA wsa;
@@ -41,7 +36,6 @@ void init_winsock() {
     }
 }
 #endif
-
 void log_traffic(struct ip *ip_header, struct tcphdr *tcp_header) {
     FILE *logfile = fopen("firewall_log.txt", "a");
     if (logfile == NULL) {
@@ -50,11 +44,11 @@ void log_traffic(struct ip *ip_header, struct tcphdr *tcp_header) {
     }
 
     char src_ip[INET_ADDRSTRLEN], dst_ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &ip_header->ip_src, src_ip, sizeof(src_ip));
-    inet_ntop(AF_INET, &ip_header->ip_dst, dst_ip, sizeof(dst_ip));
+      inet_ntop(AF_INET, &ip_header->ip_src, src_ip, sizeof(src_ip));
+  inet_ntop(AF_INET, &ip_header->ip_dst, dst_ip, sizeof(dst_ip));
 
     fprintf(logfile, "[+] Packet: %s:%d -> %s:%d\n", 
-            src_ip, ntohs(tcp_header->th_sport),
+             src_ip, ntohs(tcp_header->th_sport),
             dst_ip, ntohs(tcp_header->th_dport));
     fclose(logfile);
 }
@@ -66,22 +60,18 @@ void view_rules() {
     } else {
         for (int i = 0; i < rule_count; i++) {
             struct in_addr ip_addr;
-            ip_addr.s_addr = rules[i].ip_address;
+             ip_addr.s_addr = rules[i].ip_address;
             printf("Rule %d: %s %s:%d\n", i + 1, rules[i].action,
                     inet_ntoa(ip_addr), rules[i].port);
-        }
-    }
-}
-
+        }}}
 void add_rule() {
     if (rule_count >= MAX_RULES) {
         printf("[!] Maximum rule count reached.\n");
         return;
     }
-
-    char action[10];
-    char ip_address[16];
-    uint16_t port;
+       char action[10];
+         char ip_address[16];
+       uint16_t port;
 
     printf("[-] Enter rule action (BLOCK/ALLOW): ");
     scanf("%s", action);
@@ -92,14 +82,13 @@ void add_rule() {
 
     struct firewall_rule new_rule;
     strncpy(new_rule.action, action, sizeof(new_rule.action) - 1);
-    new_rule.ip_address = inet_addr(ip_address);
-    new_rule.port = port;
+        new_rule.ip_address = inet_addr(ip_address);
+      new_rule.port = port;
 
     pthread_mutex_lock(&rule_mutex);
     rules[rule_count++] = new_rule;
     pthread_mutex_unlock(&rule_mutex);
-
-    printf("[+] Rule added successfully.\n");
+      printf("[+] Rule added successfully.\n");
 }
 
 void packet_handler(unsigned char *buffer, int size) {
@@ -107,8 +96,7 @@ void packet_handler(unsigned char *buffer, int size) {
     struct tcphdr *tcp_header = (struct tcphdr *)(buffer + 14 + (ip_header->ip_hl << 2));
 
     log_traffic(ip_header, tcp_header);
-
-    pthread_mutex_lock(&rule_mutex);
+      pthread_mutex_lock(&rule_mutex);
     for (int i = 0; i < rule_count; i++) {
         if (rules[i].ip_address == ip_header->ip_dst.s_addr && rules[i].port == ntohs(tcp_header->th_dport)) {
             if (strncmp(rules[i].action, "BLOCK", 5) == 0) {
@@ -118,9 +106,7 @@ void packet_handler(unsigned char *buffer, int size) {
             }
         }
     }
-    pthread_mutex_unlock(&rule_mutex);
-}
-
+    pthread_mutex_unlock(&rule_mutex); }
 void *command_line_interface(void *arg) {
     char command[100];
     
@@ -144,7 +130,6 @@ void *command_line_interface(void *arg) {
     }
     return NULL;
 }
-
 int main() {
     pthread_t cli_thread;
     pthread_create(&cli_thread, NULL, command_line_interface, NULL);
