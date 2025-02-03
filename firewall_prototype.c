@@ -49,6 +49,7 @@ void log_traffic(struct ip *ip_header, struct tcphdr *tcp_header) {
       inet_ntop(AF_INET, &ip_header->ip_src, src_ip, sizeof(src_ip));
   inet_ntop(AF_INET, &ip_header->ip_dst, dst_ip, sizeof(dst_ip));
 
+    
     fprintf(logfile, "[+] Packet: %s:%d -> %s:%d\n", 
              src_ip, ntohs(tcp_header->th_sport),
             dst_ip, ntohs(tcp_header->th_dport));
@@ -58,7 +59,7 @@ void log_traffic(struct ip *ip_header, struct tcphdr *tcp_header) {
 void view_rules() {
     printf("\n[+] Current Firewall Rules:\n");
     if (rule_count == 0) {
-        printf("No rules defined.\n");
+        printf("No rules defined\n");
     } else {
         for (int i = 0; i < rule_count; i++) {
             struct in_addr ip_addr;
@@ -68,7 +69,7 @@ void view_rules() {
         }}}
 void add_rule() {
     if (rule_count >= MAX_RULES) {
-        printf("[!] Maximum rule count reached.\n");
+        printf("[!] Maximum rule count reached\n");
         return;
     }
        char action[10];
@@ -108,6 +109,9 @@ void packet_handler(unsigned char *buffer, int size) {
             }
         }
     }
+
+
+    
     pthread_mutex_unlock(&rule_mutex); }
 void *command_line_interface(void *arg) {
     char command[100];
@@ -132,6 +136,8 @@ void *command_line_interface(void *arg) {
     }
     return NULL;
 }
+
+
 int main() {
     pthread_t cli_thread;
     pthread_create(&cli_thread, NULL, command_line_interface, NULL);
@@ -139,6 +145,7 @@ int main() {
     int sockfd;
     unsigned char *buffer = (unsigned char *)malloc(65536);
 
+    
 #ifdef _WIN32
     init_winsock();
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
@@ -150,7 +157,6 @@ int main() {
         printf("Socket creation failed\n");
         exit(1);
     }
-
     while (1) {
         int size = recv(sockfd, buffer, 65536, 0);
         if (size < 0) {
@@ -166,7 +172,6 @@ int main() {
 #else
     close(sockfd);
 #endif
-
     free(buffer);
     return 0;
 }
